@@ -26,9 +26,19 @@ import java.util.Arrays;
 import java.util.concurrent.*;
 
 /**
- * Hello world!
+ * WarpWallet Cracker POC.
+ *
+ * @author Jordan Doyle
  */
 public class App {
+    /**
+     * Get an {@link ECKey} instance from a given passphrase and salt.
+     *
+     * @param passphrase generated passphrase
+     * @param salt salt passed by the user
+     * @return {@link ECKey} instance from the given passphrase/salt combo.
+     * @throws GeneralSecurityException
+     */
     public static ECKey getBitcoinPair(String passphrase, String salt) throws GeneralSecurityException {
         // s1 = scrypt(key=(passphrase||0x1), salt=(salt||0x1), N=2^18, r=8, p=1, dkLen=32)
         // s2 = pbkdf2(key=(passphrase||0x2), salt=(salt||0x2), c=2^16, dkLen=32, prf=HMAC_SHA256)
@@ -52,34 +62,43 @@ public class App {
 
     public static void main(String[] args) throws GeneralSecurityException, AddressFormatException, IOException,
             NoSuchFieldException, IllegalAccessException, InterruptedException {
-        NetworkParameters params = new MainNetParams();
+        NetworkParameters params = new MainNetParams(); // use the main net, not the test net
 
-        if (args.length != 3) {
-            System.out.println("Syntax: ./file [address to find] [salt] [insight api address (or 0)]");
+        if (args.length != 4) {
+            System.out.println("Syntax: ./file [address to find] [salt] [passphrase len] [insight api address (or 0)]");
             return;
         }
 
-        args[2] = StringUtils.strip(args[2], "/");
+        args[3] = StringUtils.strip(args[3], "/");
 
+        // check if we're using a supported operating system for quicker Scrypt operations.
         Field f = SCrypt.class.getDeclaredField("native_library_loaded");
         f.setAccessible(true);
         System.out.println("I'm using " + (f.getBoolean(null) ? "native libs" : "java libs") + " for Scrypt.");
 
         ObjectMapper mapper = new ObjectMapper();
-        SecureRandom random = new SecureRandom();
+        SecureRandom random = new SecureRandom(); // hopefully more randomness given to us by the OS.
+
+        int length = Integer.parseInt(args[2]);
 
         Runnable task = () -> {
-            String name = RandomStringUtils.random(8, 0, 0, true, true, (char[]) null, random);
+            // generate a random X character passphrase using the secure random we created above.
+            String name = RandomStringUtils.random(length, 0, 0, true, true, (char[]) null, random);
+
             ECKey pair = null;
+
             try {
                 pair = getBitcoinPair(name, args[1]);
             } catch (GeneralSecurityException e) {
                 e.printStackTrace();
                 return;
             }
+
+            // get the bitcoin address from the passphrase we generated above
             String address = pair.toAddress(params).toString();
 
             if (address.equals(args[0])) {
+                // we did it! write the private key to a file and exit execution.
                 System.out.println("MATCH FOUND! " + name + " - " + address + " - " + pair.getPrivateKeyAsWiF(params));
 
                 try {
@@ -87,13 +106,15 @@ public class App {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+
                 System.exit(0);
             } else {
                 int balance = 0;
 
-                if (!args[2].equals("0")) {
+                if (!args[3].equals("0")) {
                     try {
-                        InputStream in = new URL(args[2] + "/addr/" + address + "?noTxList=1")
+                        // check the balance of the address we just generated.
+                        InputStream in = new URL(args[3] + "/addr/" + address + "?noTxList=1")
                                 .openStream();
                         balance = mapper.readValue(in, JsonNode.class).get("balance").asInt();
                     } catch (IOException e) {
@@ -105,6 +126,7 @@ public class App {
 
                 if (balance > 0) {
                     try {
+                        // along the way we found a wallet with money in it! let's append it to our file and continue.
                         Files.write(Paths.get("found"), Arrays.asList(name + " - " + balance, pair.getPrivateKeyAsWiF(params),
                                 "\n"), StandardOpenOption.APPEND);
                     } catch (IOException e) {
