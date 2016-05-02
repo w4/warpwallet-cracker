@@ -1,4 +1,6 @@
-# WarpWallet Cracker
+WarpWallet Cracker
+==================
+
 A very, very basic WarpWallet cracker that can optionally use an insight-api server to check the wallets of each
 address it loops over. Does *not* test that it has already checked an address before. It is extremely unlikely you will
 actually manage to crack an address using this (or even find a wallet with money in)
