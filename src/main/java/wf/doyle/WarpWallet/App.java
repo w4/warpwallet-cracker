@@ -109,30 +109,7 @@ public class App {
 
                 System.exit(0);
             } else {
-                int balance = 0;
-
-                if (!args[3].equals("0")) {
-                    try {
-                        // check the balance of the address we just generated.
-                        InputStream in = new URL(args[3] + "/addr/" + address + "?noTxList=1")
-                                .openStream();
-                        balance = mapper.readValue(in, JsonNode.class).get("balance").asInt();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-
-                System.out.println("[-] " + name + " - " + address + " - no match - " + balance);
-
-                if (balance > 0) {
-                    try {
-                        // along the way we found a wallet with money in it! let's append it to our file and continue.
-                        Files.write(Paths.get("found"), Arrays.asList(name + " - " + balance, pair.getPrivateKeyAsWiF(params),
-                                "\n"), StandardOpenOption.APPEND);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
+                System.out.println("[-] " + name + " - " + address + " - no match");
             }
         };
 
