@@ -39,17 +39,17 @@ public class App {
      * @return {@link ECKey} instance from the given passphrase/salt combo.
      * @throws GeneralSecurityException
      */
-    public static ECKey getBitcoinPair(String passphrase, String salt) throws GeneralSecurityException {
+    public static ECKey getBitcoinPair(final String passphrase, final String salt) throws GeneralSecurityException {
         // s1 = scrypt(key=(passphrase||0x1), salt=(salt||0x1), N=2^18, r=8, p=1, dkLen=32)
         // s2 = pbkdf2(key=(passphrase||0x2), salt=(salt||0x2), c=2^16, dkLen=32, prf=HMAC_SHA256)
 
-        byte[] scryptPassphrase = ArrayUtils.add(passphrase.getBytes(StandardCharsets.UTF_8), (byte) 0x1);
-        byte[] scryptSalt = ArrayUtils.add(salt.getBytes(StandardCharsets.UTF_8), (byte) 0x1);
-        byte[] pbkdfPassphase = ArrayUtils.add(passphrase.getBytes(StandardCharsets.UTF_8), (byte) 0x2);
-        byte[] pbkdfSalt = ArrayUtils.add(salt.getBytes(StandardCharsets.UTF_8), (byte) 0x2);
+        final byte[] scryptPassphrase = ArrayUtils.add(passphrase.getBytes(StandardCharsets.UTF_8), (byte) 0x1);
+        final byte[] scryptSalt = ArrayUtils.add(salt.getBytes(StandardCharsets.UTF_8), (byte) 0x1);
+        final byte[] pbkdfPassphase = ArrayUtils.add(passphrase.getBytes(StandardCharsets.UTF_8), (byte) 0x2);
+        final byte[] pbkdfSalt = ArrayUtils.add(salt.getBytes(StandardCharsets.UTF_8), (byte) 0x2);
 
-        byte[] s1 = SCrypt.scrypt(scryptPassphrase, scryptSalt, (int) Math.pow(2, 18), 8, 1, 32);
-        byte[] s2 = PBKDF.pbkdf2("HmacSHA256", pbkdfPassphase, pbkdfSalt, (int) Math.pow(2, 16), 32);
+        final byte[] s1 = SCrypt.scrypt(scryptPassphrase, scryptSalt, (int) Math.pow(2, 18), 8, 1, 32);
+        final byte[] s2 = PBKDF.pbkdf2("HmacSHA256", pbkdfPassphase, pbkdfSalt, (int) Math.pow(2, 16), 32);
 
         byte[] s3 = new byte[]{};
 
@@ -60,9 +60,9 @@ public class App {
         return ECKey.fromPrivate(s3, false);
     }
 
-    public static void main(String[] args) throws GeneralSecurityException, AddressFormatException, IOException,
+    public static void main(final String[] args) throws GeneralSecurityException, AddressFormatException, IOException,
             NoSuchFieldException, IllegalAccessException, InterruptedException {
-        NetworkParameters params = new MainNetParams(); // use the main net, not the test net
+        final NetworkParameters params = new MainNetParams(); // use the main net, not the test net
 
         if (args.length != 3) {
             System.out.println("Syntax: ./file [address to find] [salt] [passphrase len]");
@@ -70,17 +70,17 @@ public class App {
         }
 
         // check if we're using a supported operating system for quicker Scrypt operations.
-        Field f = SCrypt.class.getDeclaredField("native_library_loaded");
+        final Field f = SCrypt.class.getDeclaredField("native_library_loaded");
         f.setAccessible(true);
         System.out.println("I'm using " + (f.getBoolean(null) ? "native libs" : "java libs") + " for Scrypt.");
 
-        SecureRandom random = new SecureRandom(); // hopefully more randomness given to us by the OS.
+        final SecureRandom random = new SecureRandom(); // hopefully more randomness given to us by the OS.
 
-        int length = Integer.parseInt(args[2]);
+        final int length = Integer.parseInt(args[2]);
 
         Runnable task = () -> {
             // generate a random X character passphrase using the secure random we created above.
-            String name = RandomStringUtils.random(length, 0, 0, true, true, null, random);
+            final String name = RandomStringUtils.random(length, 0, 0, true, true, null, random);
 
             ECKey pair;
 
@@ -92,7 +92,7 @@ public class App {
             }
 
             // get the bitcoin address from the passphrase we generated above
-            String address = pair.toAddress(params).toString();
+            final String address = pair.toAddress(params).toString();
 
             if (address.equals(args[0])) {
                 // we did it! write the private key to a file and exit execution.
@@ -110,11 +110,16 @@ public class App {
             }
         };
 
-        ExecutorService executor = Executors.newFixedThreadPool(4);
+        final int threads = Runtime.getRuntime().availableProcessors() + 1;
+        final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(threads);
+        executor.prestartAllCoreThreads();
+
+        System.out.println("Running on " + threads + " threads");
 
         while (true) {
-            executor.submit(task);
-            Thread.sleep(250);
+            if (executor.getActiveCount() < executor.getPoolSize()) {
+                executor.submit(task);
+            }
         }
     }
 }
