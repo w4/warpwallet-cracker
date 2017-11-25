@@ -1,21 +1,16 @@
 package wf.doyle.WarpWallet;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lambdaworks.crypto.PBKDF;
 import com.lambdaworks.crypto.SCrypt;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.bitcoinj.core.AddressFormatException;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.params.MainNetParams;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Field;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -23,7 +18,8 @@ import java.nio.file.StandardOpenOption;
 import java.security.GeneralSecurityException;
 import java.security.SecureRandom;
 import java.util.Arrays;
-import java.util.concurrent.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * WarpWallet Cracker POC.
