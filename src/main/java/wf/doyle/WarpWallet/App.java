@@ -65,27 +65,24 @@ public class App {
         NetworkParameters params = new MainNetParams(); // use the main net, not the test net
 
         if (args.length != 4) {
-            System.out.println("Syntax: ./file [address to find] [salt] [passphrase len] [insight api address (or 0)]");
+            System.out.println("Syntax: ./file [address to find] [salt] [passphrase len]");
             return;
         }
-
-        args[3] = StringUtils.strip(args[3], "/");
 
         // check if we're using a supported operating system for quicker Scrypt operations.
         Field f = SCrypt.class.getDeclaredField("native_library_loaded");
         f.setAccessible(true);
         System.out.println("I'm using " + (f.getBoolean(null) ? "native libs" : "java libs") + " for Scrypt.");
 
-        ObjectMapper mapper = new ObjectMapper();
         SecureRandom random = new SecureRandom(); // hopefully more randomness given to us by the OS.
 
         int length = Integer.parseInt(args[2]);
 
         Runnable task = () -> {
             // generate a random X character passphrase using the secure random we created above.
-            String name = RandomStringUtils.random(length, 0, 0, true, true, (char[]) null, random);
+            String name = RandomStringUtils.random(length, 0, 0, true, true, null, random);
 
-            ECKey pair = null;
+            ECKey pair;
 
             try {
                 pair = getBitcoinPair(name, args[1]);
