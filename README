@@ -27,5 +27,5 @@ advantage NVIDIA's CUDA cores.
 Syntax:
     mvn install
 
-    # [address to crack] [salt] [passphrase length] [insight api to use - or "0"]
-    java -jar target/WarpWallet-1.0-SNAPSHOT-jar-with-dependencies.jar 1AdU3EcimMFN7JLJtceSyrmFYE3gF5ZnGj a@b.c 8 "http://91.121.83.82:3001/insight-api"
+    # [address to crack] [salt] [passphrase length]
+    java -jar target/WarpWallet-1.0-SNAPSHOT-jar-with-dependencies.jar 1AdU3EcimMFN7JLJtceSyrmFYE3gF5ZnGj a@b.c 8

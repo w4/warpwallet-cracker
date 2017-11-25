@@ -64,7 +64,7 @@ public class App {
             NoSuchFieldException, IllegalAccessException, InterruptedException {
         NetworkParameters params = new MainNetParams(); // use the main net, not the test net
 
-        if (args.length != 4) {
+        if (args.length != 3) {
             System.out.println("Syntax: ./file [address to find] [salt] [passphrase len]");
             return;
         }
